@@ -35,14 +35,14 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", files[0]);
 
-    const uploadRes = await fetch("http://localhost:8000/api/upload/", {
+    const uploadRes = await fetch("https://logistics-cost-reconciliation.onrender.com/api/upload/", {
       method: "POST",
       body: formData,
     });
 
     if (!uploadRes.ok) return;
 
-    await fetch("http://localhost:8000/api/optimize-loads/", {
+    await fetch("https://logistics-cost-reconciliation.onrender.com/api/optimize-loads/", {
       method: "POST",
     });
 
@@ -50,7 +50,7 @@ export default function Home() {
   };
 
   const fetchReport = async (cost: number) => {
-    const reportRes = await fetch(`http://localhost:8000/api/export/json/?total_cost=${cost}`);
+    const reportRes = await fetch(`https://logistics-cost-reconciliation.onrender.com/api/export/json/?total_cost=${cost}`);
     if (!reportRes.ok) return;
     const reportData: Report = await reportRes.json();
     setReport(reportData);
@@ -62,7 +62,7 @@ export default function Home() {
       return;
     }
 
-    const res = await fetch(`http://localhost:8000/api/export/csv/?total_cost=${totalCost}`);
+    const res = await fetch(`https://logistics-cost-reconciliation.onrender.com/api/export/csv/?total_cost=${totalCost}`);
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
