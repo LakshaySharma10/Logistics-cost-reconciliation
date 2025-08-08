@@ -61,14 +61,32 @@ def optimize_load_assignments(request):
     remaining_load = total_load
     optimized_assignments = []
 
+    greedy_phase_trucks = []
+    bin_packing_trucks = []
+
     for truck in trucks:
         if remaining_load >= truck.capacity:
             truck.assigned_load = truck.capacity
             remaining_load -= truck.capacity
+            greedy_phase_trucks.append(truck)
         else:
-            truck.assigned_load = remaining_load
-            remaining_load = 0
+            bin_packing_trucks.append(truck)
 
+    if remaining_load > 0 and bin_packing_trucks:
+        bin_packing_trucks.sort(key=lambda t: t.capacity)
+
+        for truck in bin_packing_trucks:
+            if remaining_load == 0:
+                truck.assigned_load = 0
+            elif remaining_load >= truck.capacity:
+                truck.assigned_load = truck.capacity
+                remaining_load -= truck.capacity
+            else:
+                truck.assigned_load = remaining_load
+                remaining_load = 0
+
+    all_trucks = greedy_phase_trucks + bin_packing_trucks
+    for truck in all_trucks:
         optimized_assignments.append({
             "truck_id": truck.truck_id,
             "assigned_load": truck.assigned_load,
@@ -76,12 +94,13 @@ def optimize_load_assignments(request):
             "company": truck.company.name
         })
 
-    Truck.objects.bulk_update(trucks, ['assigned_load'])
+    Truck.objects.bulk_update(all_trucks, ['assigned_load'])
 
     return Response({
         "message": "Fleet load optimized successfully.",
         "assignments": optimized_assignments
     }, status=status.HTTP_200_OK)
+
 
 # Cost Calculation View
 @api_view(['POST'])
