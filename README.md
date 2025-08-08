@@ -6,7 +6,7 @@ The platform helps logistics companies reconcile transport costs by processing E
 
 ### My Approach:
 - Parsed Excel data is stored in a Django backend using models for trucks and transport companies (default sqlite is used).
-- A greedy algorithm is used to optimize load distribution, prioritizing trucks with higher capacity to ensure full fleet utilization.
+- A greedy+first fit solution is used to optimize load distribution, prioritizing trucks with higher capacity to ensure full fleet utilization.
 - Costs are calculated based on the load each company is responsible for.
 - DRF is being used to create the API endpoints which are used for making frontend integrations.
 
@@ -49,7 +49,7 @@ npm run dev
 
 - The frontend will run at: **http://localhost:3000**
 
-### 📁 Folder Structure
+### Folder Structure
 
 ```
 Logistics-cost-reconciliation/
