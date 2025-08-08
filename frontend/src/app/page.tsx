@@ -1,18 +1,37 @@
 'use client'
 
 import { FileUpload } from "@/components/file-upload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PieChart, Pie, Tooltip, Cell, Legend, ResponsiveContainer } from 'recharts';
 import { sora400 } from "@/lib/font-utils";
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
 
+interface Truck {
+  truck_id?: string;
+  company: string;
+  assigned_load: number;
+  capacity: number;
+}
+
+interface Report {
+  company_costs: Record<string, string | number>;
+  trucks: Truck[];
+}
+
 export default function Home() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<Report | null>(null);
+  const [totalCost, setTotalCost] = useState<number | null>(null);
+  const [fileUploaded, setFileUploaded] = useState<boolean>(false);
 
   const handleFileUpload = async (files: File[]) => {
-    setFiles(files);
+    if (!totalCost) {
+      alert("Please enter the total cost before uploading.");
+      return;
+    }
+
+    setFileUploaded(true);
+
     const formData = new FormData();
     formData.append("file", files[0]);
 
@@ -23,17 +42,27 @@ export default function Home() {
 
     if (!uploadRes.ok) return;
 
-    const optimizeRes = await fetch("http://localhost:8000/api/optimize-loads/", {
+    await fetch("http://localhost:8000/api/optimize-loads/", {
       method: "POST",
     });
 
-    const reportRes = await fetch("http://localhost:8000/api/export/json/?total_cost=3000");
-    const reportData = await reportRes.json();
+    fetchReport(totalCost);
+  };
+
+  const fetchReport = async (cost: number) => {
+    const reportRes = await fetch(`http://localhost:8000/api/export/json/?total_cost=${cost}`);
+    if (!reportRes.ok) return;
+    const reportData: Report = await reportRes.json();
     setReport(reportData);
   };
 
   const downloadCSV = async () => {
-    const res = await fetch("http://localhost:8000/api/export/csv/?total_cost=3000");
+    if (!totalCost) {
+      alert("Please enter the total cost.");
+      return;
+    }
+
+    const res = await fetch(`http://localhost:8000/api/export/csv/?total_cost=${totalCost}`);
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -44,7 +73,7 @@ export default function Home() {
     link.remove();
   };
 
-  const computeCompanyLoads = (trucks: any[]) => {
+  const computeCompanyLoads = (trucks: Truck[]) => {
     const loadMap: Record<string, number> = {};
     trucks.forEach(truck => {
       const company = truck.company;
@@ -62,14 +91,32 @@ export default function Home() {
     }))
     : [];
 
+  useEffect(() => {
+    if (totalCost && fileUploaded) {
+      fetchReport(totalCost);
+    }
+  }, [totalCost]);
+
   return (
     <main className={`${sora400.className} p-4 sm:p-6 lg:p-8 text-white bg-black min-h-screen`}>
       <h1 className="text-2xl sm:text-3xl font-bold mt-6 text-center">
         Logistics Cost Reconciliation
       </h1>
-
       <div className="flex justify-center mb-6">
         <FileUpload onChange={handleFileUpload} />
+      </div>
+
+      <div className="flex justify-center mt-6 mb-6">
+        <input
+          type="number"
+          placeholder="Enter total cost"
+          className="text-white px-4 py-2 rounded border"
+          value={totalCost ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            setTotalCost(val ? Number(val) : null);
+          }}
+        />
       </div>
 
       {report && (
@@ -100,7 +147,6 @@ export default function Home() {
               </table>
             </div>
 
-            {/* Truck-wise Load Distribution */}
             <div className="mb-10">
               <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">
                 Truck Load Distribution
@@ -118,7 +164,7 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody>
-                    {report.trucks.map((truck: any, idx: number) => (
+                    {report.trucks.map((truck, idx) => (
                       <tr key={idx}>
                         <td className="border border-white px-2 sm:px-4 py-2 text-sm sm:text-base">{truck.truck_id || `Truck ${idx + 1}`}</td>
                         <td className="border border-white px-2 sm:px-4 py-2 text-sm sm:text-base">{truck.company}</td>
@@ -131,7 +177,6 @@ export default function Home() {
                 </table>
               </div>
             </div>
-
 
             {pieData.length > 0 && (
               <div className="flex justify-center w-full">
