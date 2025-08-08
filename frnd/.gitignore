@@ -1,0 +1,50 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django specific
+*.log
+*.pot
+*.pyc
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# VSCode or IDE configs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Pipenv
+Pipfile.lock
+
+# Pytest
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+
+# Migrations (optional if auto-generated)
+*/migrations/__pycache__/
+*/migrations/*.pyc
+# Uncomment next line if you don't want to track migrations:
+# */migrations/*.py
+
+# Environment variables
+.env
+.env.*
+
+# Node stuff (if using Node for frontend)
+node_modules/
